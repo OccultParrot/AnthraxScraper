@@ -89,7 +89,7 @@ async def compile_sheets(interaction: discord.Interaction, messages: List[discor
         response = requests.post(
             "https://pastebin.com/api/api_post.php",
             data={
-                "api_dev_key": os.getenv("pastebin_key"),
+                "api_dev_key": os.getenv("PASTEBIN_KEY"),
                 "api_option": "paste",
                 "api_paste_code": content,
                 "api_paste_name": str(interaction.user.id),
