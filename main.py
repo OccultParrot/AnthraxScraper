@@ -100,7 +100,7 @@ async def compile_sheets(interaction: discord.Interaction, messages: List[discor
 
         # Catching errors
         if response.status_code != 200:
-            console.print(f"HTTP Error: https://http.cat/{response.status_code}")
+            console.print(f"HTTP Error: https://http.cat/{response.status_code}\n{response.text}")
             embed.set_image(url=f"https://http.cat/{response.status_code}")
             await interaction.edit_original_response(embed=embed)
             return
