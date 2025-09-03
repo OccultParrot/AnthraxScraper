@@ -55,7 +55,7 @@ async def fetch(interaction: discord.Interaction):
 @fetch.error
 async def fetch_error(interaction, error):
     if isinstance(error, app_commands.CommandOnCooldown):
-        await interaction.response.send_message(embed=Embed(title="Cooldown", color=discord.Color.greyple(), description=f"Command is on cooldown for {error.retry_after} seconds."))
+        await interaction.response.send_message(embed=Embed(title="Cooldown", color=discord.Color.greyple(), description=f"Command is on cooldown for {round(error.retry_after)} seconds."))
 
 
 # == Helper Functions ==
