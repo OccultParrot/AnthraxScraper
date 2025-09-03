@@ -60,7 +60,7 @@ async def fetch_error(interaction: discord.Interaction, error: app_commands.AppC
 
 # == Helper Functions ==
 
-async def read_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+async def read_error(interaction: List[discord.Interaction], error: app_commands.AppCommandError):
     if isinstance(error, app_commands.MissingPermissions):
         await interaction[0].response.send_message("You don't have permission to use this command.",
                                                    ephemeral=True)
@@ -96,7 +96,7 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
 async def compile_sheets(interaction: discord.Interaction, messages: List[discord.Message]):
     if len(messages) == 0:
         embed = Embed(title="No messages found!", color=discord.Color.blue(), description="Welp, looks like ya dont have any posts in the forums!")
-        await interaction.response.edit_message(embed=embed)
+        await interaction.edit_original_response(embed=embed)
         return
     
     embed = Embed(title="Error!!!",
