@@ -39,6 +39,8 @@ async def on_ready():
 
 @client.tree.command(name="fetch",
                      description="Fetches all the character sheets made by your account, and returns a link to a pastebin.")
+# Cooldown for command
+@app_commands.checks.cooldown(1, 300, key=lambda i: i.user.id)  # Uncomment to enable cooldown
 async def fetch(interaction: discord.Interaction):
     # We respond with a message saying "searching..." so that we don't get the application didn't respond error
     # Then scrub through the forum channels for threads authored by the interaction.user and append them all to an array
@@ -49,9 +51,26 @@ async def fetch(interaction: discord.Interaction):
 
     messages = await scrub_forums(interaction)
     await compile_sheets(interaction, messages)
+    
+@fetch.error
+async def fetch_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    await read_error(interaction, error)
+    
 
 
 # == Helper Functions ==
+
+async def read_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.MissingPermissions):
+        await interaction[0].response.send_message("You don't have permission to use this command.",
+                                                   ephemeral=True)
+    elif isinstance(error, app_commands.CommandOnCooldown):
+        await interaction[0].response.send_message(error, ephemeral=True)
+    else:
+        console.print(f"[red]Error[/red] {error}")
+        await interaction[0].response.send_message("An error occurred while running the command",
+                                                   ephemeral=True)
+
 async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message]:
     guild = client.get_guild(client.get_guild_id().id)
     posts: List[discord.Message] = []
@@ -75,6 +94,9 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
 
 
 async def compile_sheets(interaction: discord.Interaction, messages: List[discord.Message]):
+    if len(messages) == 0:
+        embed = Embed(title="No messages found!", color=discord.Color.blue(), description="Welp, looks like ya dont have any posts in the forums!")
+    
     embed = Embed(title="Error!!!",
                   description="Something went wrong!\nQuick! Let parrot know!!!!\n-# Oh dear, how could this have happened!",
                   color=discord.Color.red())
