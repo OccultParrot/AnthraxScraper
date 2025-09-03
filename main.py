@@ -96,6 +96,8 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
 async def compile_sheets(interaction: discord.Interaction, messages: List[discord.Message]):
     if len(messages) == 0:
         embed = Embed(title="No messages found!", color=discord.Color.blue(), description="Welp, looks like ya dont have any posts in the forums!")
+        await interaction.response.edit_message(embed=embed)
+        return
     
     embed = Embed(title="Error!!!",
                   description="Something went wrong!\nQuick! Let parrot know!!!!\n-# Oh dear, how could this have happened!",
