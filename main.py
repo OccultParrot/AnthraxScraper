@@ -55,9 +55,14 @@ async def fetch(interaction: discord.Interaction):
 async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message]:
     guild = client.get_guild(client.get_guild_id().id)
     posts: List[discord.Message] = []
+    forum_ids = [int(forum_id) for forum_id in os.getenv("FORUM_IDS").split(",")]
 
     console.print(f"Fetching messages from {interaction.user.name} ({interaction.user.id})")
     for forum in guild.forums:
+        # Filtering out nonspecified channels
+        if forum.id not in forum_ids:
+            continue
+        
         for thread in forum.threads:
             if thread.owner_id != interaction.user.id:
                 continue
