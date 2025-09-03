@@ -51,26 +51,9 @@ async def fetch(interaction: discord.Interaction):
 
     messages = await scrub_forums(interaction)
     await compile_sheets(interaction, messages)
-    
-@fetch.error
-async def fetch_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    await read_error(interaction, error)
-    
 
 
 # == Helper Functions ==
-
-async def read_error(interaction: List[discord.Interaction], error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.MissingPermissions):
-        await interaction[0].response.send_message("You don't have permission to use this command.",
-                                                   ephemeral=True)
-    elif isinstance(error, app_commands.CommandOnCooldown):
-        await interaction[0].response.send_message(error, ephemeral=True)
-    else:
-        console.print(f"[red]Error[/red] {error}")
-        await interaction[0].response.send_message("An error occurred while running the command",
-                                                   ephemeral=True)
-
 async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message]:
     guild = client.get_guild(client.get_guild_id().id)
     posts: List[discord.Message] = []
