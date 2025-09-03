@@ -52,6 +52,11 @@ async def fetch(interaction: discord.Interaction):
     messages = await scrub_forums(interaction)
     await compile_sheets(interaction, messages)
 
+@fetch.error
+async def fetch_error(interaction, error):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(embed=Embed(title="Cooldown", color=discord.Color.greyple(), description=f"Command is on cooldown for {error.retry_after} seconds."))
+
 
 # == Helper Functions ==
 async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message]:
