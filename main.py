@@ -52,10 +52,13 @@ async def fetch(interaction: discord.Interaction):
     messages = await scrub_forums(interaction)
     await compile_sheets(interaction, messages)
 
+
 @fetch.error
 async def fetch_error(interaction, error):
     if isinstance(error, app_commands.CommandOnCooldown):
-        await interaction.response.send_message(embed=Embed(title="Cooldown", color=discord.Color.greyple(), description=f"Command is on cooldown for {round(error.retry_after)} seconds."))
+        await interaction.response.send_message(embed=Embed(title="Cooldown", color=discord.Color.greyple(),
+                                                            description=f"Command is on cooldown for {round(error.retry_after)} seconds."),
+                                                ephemeral=True)
 
 
 # == Helper Functions ==
@@ -69,7 +72,7 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
         # Filtering out nonspecified channels
         if forum.id not in forum_ids:
             continue
-        
+
         for thread in forum.threads:
             if thread.owner_id != interaction.user.id:
                 continue
@@ -83,10 +86,11 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
 
 async def compile_sheets(interaction: discord.Interaction, messages: List[discord.Message]):
     if len(messages) == 0:
-        embed = Embed(title="No messages found!", color=discord.Color.blue(), description="Welp, looks like ya dont have any posts in the forums!")
+        embed = Embed(title="No messages found!", color=discord.Color.blue(),
+                      description="Welp, looks like ya dont have any posts in the forums!")
         await interaction.edit_original_response(embed=embed)
         return
-    
+
     embed = Embed(title="Error!!!",
                   description="Something went wrong!\nQuick! Let parrot know!!!!\n-# Oh dear, how could this have happened!",
                   color=discord.Color.red())
