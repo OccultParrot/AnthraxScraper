@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Tuple
 
 import discord
 import requests
@@ -49,8 +49,8 @@ async def fetch(interaction: discord.Interaction):
                   description="Searching for character sheet posts, please be patient!")
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    messages = await scrub_forums(interaction)
-    await compile_sheets(interaction, messages)
+    messages, error_state = await scrub_forums(interaction)
+    await compile_sheets(interaction, messages, error_state)
 
 
 @fetch.error
@@ -62,7 +62,7 @@ async def fetch_error(interaction, error):
 
 
 # == Helper Functions ==
-async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message]:
+async def scrub_forums(interaction: discord.Interaction) -> Tuple[List[discord.Message], bool]:
     guild = client.get_guild(client.get_guild_id().id)
     posts: List[discord.Message] = []
     forum_ids = [int(forum_id) for forum_id in os.getenv("FORUM_IDS").split(",")]
@@ -74,6 +74,17 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
             continue
 
         for thread in forum.threads:
+            if getattr(thread, "archived", False) or getattr(thread, "locked", False):
+                print(f"Thread {thread.name} is archived, attempting to unarchive it.")
+                try:
+                    await thread.edit(archived=False, locked=False)
+                    console.print(f"Successfully unarchived thread {thread.name}.")
+                except discord.Forbidden:
+                    console.print(f"Missing manage thread permissions")
+                    return [], True
+                except discord.HTTPException as e:
+                    console.print(f"Failed to unarchive thread {thread.name}. Error: {e}")
+                    return [], True
             if thread.owner_id != interaction.user.id:
                 continue
             async for message in thread.history(limit=None, oldest_first=True):
@@ -81,10 +92,10 @@ async def scrub_forums(interaction: discord.Interaction) -> List[discord.Message
                     posts.append(message)
 
     console.print(f"Fetched {len(posts)} messages from {interaction.user.name} ({interaction.user.id})")
-    return posts
+    return posts, False
 
 
-async def compile_sheets(interaction: discord.Interaction, messages: List[discord.Message]):
+async def compile_sheets(interaction: discord.Interaction, messages: List[discord.Message], error_state: bool):
     if len(messages) == 0:
         embed = Embed(title="No messages found!", color=discord.Color.blue(),
                       description="Welp, looks like ya dont have any posts in the forums!")
@@ -95,6 +106,10 @@ async def compile_sheets(interaction: discord.Interaction, messages: List[discor
                   description="Something went wrong!\nQuick! Let parrot know!!!!\n-# Oh dear, how could this have happened!",
                   color=discord.Color.red())
 
+    if error_state:
+        await interaction.edit_original_response(embed=embed)
+        return
+    
     # Mashing all the messages together
     content = ""
     for message in messages:
@@ -122,13 +137,14 @@ async def compile_sheets(interaction: discord.Interaction, messages: List[discor
             return
         if response.text.startswith('Bad API request'):
             console.print(f"HTTP Error: {response.text}")
-            embed.add_field(name="Bad API Request", value=f"HTTP Error: {response.text}")
+            embed.add_field(name="Bad API Request", value=f"HTTP Error: {response.text}", inline=True)
             await interaction.edit_original_response(embed=embed)
             return
 
         # All good! Send happy message!
         embed = Embed(title="Success!", color=discord.Color.green(),
                       description=f"Scrubbed all your posts from the character sheet forums! Check 'em out!!")
+        embed.add_field(name="Number of Messages", value=len(messages), inline=True)
         embed.add_field(name="Pastebin URL", value=response.text.strip())
         embed.set_image(url=f"https://http.cat/{response.status_code}")
         await interaction.edit_original_response(embed=embed)
